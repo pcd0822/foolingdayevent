@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>긴급 공지사항 - 학교 포털</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 가짜 공지 화면 */
+    #fake-notice {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 2rem;
+      text-align: center;
+      transition: opacity 0.5s;
+    }
+
+    #fake-notice h1 {
+      font-size: 2.2rem;
+      color: #c0392b;
+      margin-bottom: 1rem;
+      animation: pulse 1s infinite;
+    }
+
+    #fake-notice p {
+      font-size: 1.2rem;
+      max-width: 600px;
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+    }
+
+    #fake-notice .badge {
+      background: #c0392b;
+      color: #fff;
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    #confirm-btn {
+      padding: 1rem 3rem;
+      font-size: 1.1rem;
+      background: #c0392b;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    #confirm-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* BSOD 화면 */
+    #bsod {
+      position: fixed;
+      inset: 0;
+      background: #0078d7;
+      color: #fff;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 2rem;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    #bsod .sad { font-size: 8rem; margin-bottom: 1rem; }
+    #bsod h2 { font-size: 1.8rem; margin-bottom: 1rem; }
+    #bsod p { font-size: 1rem; max-width: 600px; line-height: 1.6; margin-bottom: 0.5rem; }
+    #bsod .progress-text { margin-top: 2rem; font-size: 1.2rem; }
+
+    /* 만우절 서프라이즈 */
+    #surprise {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    #surprise h1 {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: bounceIn 0.8s;
+    }
+
+    #surprise h2 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      animation: bounceIn 0.8s 0.2s both;
+    }
+
+    #surprise p {
+      font-size: 1.3rem;
+      opacity: 0.9;
+      animation: bounceIn 0.8s 0.4s both;
+    }
+
+    #surprise .emoji-rain {
+      position: absolute;
+      font-size: 2rem;
+      animation: fall linear forwards;
+      pointer-events: none;
+    }
+
+    /* 도망가는 버튼 */
+    .runaway-zone {
+      margin-top: 2rem;
+      position: relative;
+      width: 300px;
+      height: 80px;
+    }
+
+    #runaway-btn {
+      position: absolute;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      background: #fff;
+      color: #764ba2;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.1s;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #retry-btn {
+      margin-top: 1.5rem;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      animation: bounceIn 0.8s 0.6s both;
+    }
+
+    /* 컨페티 */
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      z-index: 400;
+      pointer-events: none;
+      animation: confettiFall linear forwards;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    @keyframes bounceIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.95); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes fall {
+      to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+    }
+
+    @keyframes confettiFall {
+      0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* 뒤집힌 텍스트 효과 (가짜 공지에서) */
+    .flip-text {
+      display: inline-block;
+      transition: transform 2s;
+    }
+
+    .flipped {
+      transform: rotate(180deg);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1단계: 가짜 긴급 공지 -->
+  <div id="fake-notice">
+    <div class="badge">🚨 긴급</div>
+    <h1>⚠️ 긴급 공지사항 ⚠️</h1>
+    <p>
+      교육부 시스템 점검으로 인해 <strong>이번 주 모든 과제 제출 기록이 초기화</strong>되었습니다.<br><br>
+      영향받는 학생은 아래 버튼을 눌러 <strong>과제 복구 절차</strong>를 진행해 주세요.
+    </p>
+    <button id="confirm-btn">📋 과제 복구하기</button>
+  </div>
+
+  <!-- 2단계: 가짜 블루스크린 -->
+  <div id="bsod">
+    <div class="sad">:(</div>
+    <h2>PC에 문제가 발생하여 다시 시작해야 합니다.</h2>
+    <p>오류 정보를 수집하고 있습니다. 자동으로 다시 시작됩니다.</p>
+    <div class="progress-text"><span id="bsod-percent">0</span>% 완료</div>
+  </div>
+
+  <!-- 3단계: 만우절 서프라이즈 -->
+  <div id="surprise">
+    <h1>🎉 만우절! 🎉</h1>
+    <h2>속았지? ㅋㅋㅋ</h2>
+    <p>과제는 안전합니다! 걱정 마세요~ 😆</p>
+
+    <div class="runaway-zone">
+      <button id="runaway-btn">😤 안 속았거든!</button>
+    </div>
+    <button id="retry-btn">🔄 친구한테도 보여주기</button>
+  </div>
+
+  <script>
+    const fakeNotice = document.getElementById('fake-notice');
+    const bsod = document.getElementById('bsod');
+    const surprise = document.getElementById('surprise');
+    const confirmBtn = document.getElementById('confirm-btn');
+    const bsodPercent = document.getElementById('bsod-percent');
+    const runawayBtn = document.getElementById('runaway-btn');
+    const retryBtn = document.getElementById('retry-btn');
+
+    // 1단계 → 2단계: 버튼 클릭 시 블루스크린
+    confirmBtn.addEventListener('click', () => {
+      fakeNotice.style.opacity = '0';
+      setTimeout(() => {
+        fakeNotice.style.display = 'none';
+        bsod.style.display = 'flex';
+        animateBSOD();
+      }, 500);
+    });
+
+    // 블루스크린 퍼센트 애니메이션
+    function animateBSOD() {
+      let percent = 0;
+      const interval = setInterval(() => {
+        // 랜덤한 속도로 올라가게
+        percent += Math.floor(Math.random() * 8) + 1;
+        if (percent > 100) percent = 100;
+        bsodPercent.textContent = percent;
+
+        if (percent >= 100) {
+          clearInterval(interval);
+          setTimeout(showSurprise, 800);
+        }
+      }, 200);
+    }
+
+    // 2단계 → 3단계: 서프라이즈!
+    function showSurprise() {
+      bsod.style.display = 'none';
+      surprise.style.display = 'flex';
+      launchConfetti();
+      startEmojiRain();
+    }
+
+    // 컨페티 발사
+    function launchConfetti() {
+      const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd', '#01a3a4'];
+      for (let i = 0; i < 100; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * 100 + 'vw';
+          confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+          confetti.style.width = (Math.random() * 8 + 5) + 'px';
+          confetti.style.height = (Math.random() * 8 + 5) + 'px';
+          document.body.appendChild(confetti);
+          setTimeout(() => confetti.remove(), 4000);
+        }, i * 30);
+      }
+    }
+
+    // 이모지 비
+    function startEmojiRain() {
+      const emojis = ['😂', '🤣', '😜', '🎊', '🎉', '🤡', '👻', '💀', '🫠'];
+      setInterval(() => {
+        const emoji = document.createElement('div');
+        emoji.className = 'emoji-rain';
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        emoji.style.left = Math.random() * 100 + 'vw';
+        emoji.style.top = '-30px';
+        emoji.style.animationDuration = (Math.random() * 3 + 3) + 's';
+        surprise.appendChild(emoji);
+        setTimeout(() => emoji.remove(), 6000);
+      }, 300);
+    }
+
+    // 도망가는 버튼
+    let escapeCount = 0;
+    runawayBtn.addEventListener('mouseenter', () => {
+      escapeCount++;
+      if (escapeCount < 5) {
+        const zone = runawayBtn.parentElement;
+        const maxX = zone.offsetWidth - runawayBtn.offsetWidth;
+        const maxY = zone.offsetHeight - runawayBtn.offsetHeight;
+        runawayBtn.style.left = Math.random() * maxX + 'px';
+        runawayBtn.style.top = Math.random() * maxY + 'px';
+        runawayBtn.style.transform = 'none';
+
+        const texts = ['ㅋㅋ 못 누르지?', '여기야~', '너무 느려!', '한 번 더!', '거의 다 왔어!'];
+        runawayBtn.textContent = texts[Math.min(escapeCount - 1, texts.length - 1)];
+      } else {
+        runawayBtn.style.left = '50%';
+        runawayBtn.style.top = '50%';
+        runawayBtn.style.transform = 'translate(-50%, -50%)';
+        runawayBtn.textContent = '😊 ㅋㅋ 인정!';
+      }
+    });
+
+    runawayBtn.addEventListener('click', () => {
+      runawayBtn.textContent = '🥰 만우절 축하해!';
+      launchConfetti();
+    });
+
+    // 다시하기
+    retryBtn.addEventListener('click', () => {
+      surprise.style.display = 'none';
+      fakeNotice.style.display = 'flex';
+      fakeNotice.style.opacity = '1';
+      escapeCount = 0;
+      runawayBtn.textContent = '😤 안 속았거든!';
+      runawayBtn.style.left = '50%';
+      runawayBtn.style.top = '50%';
+      runawayBtn.style.transform = 'translate(-50%, -50%)';
+    });
+  </script>
+</body>
+</html>
